@@ -22,6 +22,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import android.content.Intent
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.painterResource
@@ -40,10 +41,12 @@ fun KBitesScreen() {
     val wellsFargoWhite = Color(0xFFFFFFFF)
     val backgroundGrey = Color(0xFFF5F5F5)
     val context = LocalContext.current
+    var isLoading by remember { mutableStateOf(false) } // <-- Added loading state
     val googleSignInLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
         // TODO: Handle Google Sign-In result here
+        isLoading = false // <-- Dismiss progress bar when result is received
     }
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -113,6 +116,7 @@ fun KBitesScreen() {
                 Spacer(modifier = Modifier.height(100.dp))
                 Button(
                     onClick = {
+                        isLoading = true // <-- Show progress bar
                         // Launch Google Sign-In intent
                         val signInIntent = Intent("com.google.android.gms.auth.GOOGLE_SIGN_IN")
                         googleSignInLauncher.launch(signInIntent)
@@ -141,24 +145,36 @@ fun KBitesScreen() {
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
+
+
                 Button(
                     onClick = {
+                        isLoading = true // <-- Show progress bar
                         // Launch Google Sign-In intent
                         val signInIntent = Intent("com.google.android.gms.auth.GOOGLE_SIGN_IN")
                         googleSignInLauncher.launch(signInIntent)
                     },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .wrapContentWidth()
+                        .height(40.dp)
+                        .padding(horizontal = 10.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.White,
                         contentColor = wellsFargoRed
                     )
                 ) {
-                    Icon(
-                        painter = rememberVectorPainter(Icons.Default.AccountCircle),
-                        contentDescription = "Google logo",
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Continue with Google", color = wellsFargoRed)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.apple_ico),
+                            contentDescription = "Google logo",
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Continue with Apple", color = wellsFargoRed)
+                    }
                 }
             }
             // Privacy Policy at the bottom center
@@ -170,6 +186,17 @@ fun KBitesScreen() {
                     .clickable { uriHandler.openUri("https://google.com") }
                     .padding(8.dp)
             )
+            if (isLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .align(Alignment.Center)
+                        .background(Color(0x88000000)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = wellsFargoRed)
+                }
+            }
         }
     }
 }
