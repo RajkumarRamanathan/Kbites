@@ -37,7 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.build.kbites_demo.BakingViewModel
+import com.build.kbites_demo.viewmodel.BakingViewModel
 import com.build.kbites_demo.R
 import com.build.kbites_demo.UiState
 
