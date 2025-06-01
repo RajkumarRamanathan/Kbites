@@ -55,6 +55,9 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.generativeai)
     implementation("com.google.android.gms:play-services-auth:21.1.0")
+    implementation(libs.androidx.navigation.runtime.android)
+    implementation("androidx.navigation:navigation-compose:2.7.7")
+    implementation("androidx.navigation:navigation-runtime-ktx:2.7.7")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -62,5 +65,19 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    implementation(libs.androidx.credentials)
+
+    // optional - needed for credentials support from play services, for devices running
+    // Android 13 and below.
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation (libs.googleid)
+
+        // ... other dependencies
+        implementation ("androidx.credentials:credentials:1.6.0-alpha02" )// Or latest stable
+        implementation ("androidx.credentials:credentials-play-services-auth:1.6.0-alpha02" )// Or latest stable
+        implementation ("com.google.android.libraries.identity.googleid:googleid:1.1.0" )// Or the actual latest version
+        // ... other dependencies
+
 }
 

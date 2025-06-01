@@ -1,53 +1,68 @@
 package com.build.kbites_demo.screen
 
+import android.app.Activity
+import android.content.Context
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import android.content.Intent
-import android.graphics.BitmapFactory
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.painterResource
+import androidx.navigation.NavController
 import com.build.kbites_demo.R
 import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount
-import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
-
-val images1 = arrayOf(
-    // Image generated using Gemini from the prompt "cupcake image"
-   com.build.kbites_demo.R.drawable.baked_goods_1
-)
+import com.google.android.gms.tasks.Task
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import android.util.Log
 
 @Composable
-fun KBitesScreen() {
+fun KBitesScreen(navController: NavController) {
     val uriHandler = LocalUriHandler.current
     var email by remember { mutableStateOf(TextFieldValue("")) }
     val wellsFargoRed = Color(0xFFB31B1B)
-    val wellsFargoYellow = Color(0xFFFFCC00)
     val wellsFargoWhite = Color(0xFFFFFFFF)
     val backgroundGrey = Color(0xFFF5F5F5)
     val context = LocalContext.current
     var isLoading by remember { mutableStateOf(false) }
+    var authFailed by remember { mutableStateOf(false) }
 
     // GoogleSignIn setup
     val gso = remember {
@@ -60,12 +75,32 @@ fun KBitesScreen() {
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
         isLoading = false
-        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-        try {
-            val account: GoogleSignInAccount? = task.getResult(ApiException::class.java)
-            // TODO: Handle successful sign-in (account contains user info)
-        } catch (e: ApiException) {
-            // TODO: Handle sign-in failure
+        val data = result.data
+        var success = false
+
+        if(!authFailed) {
+            navController.navigate("baking"){
+                popUpTo("kBites") { inclusive = true }
+            }
+        }
+
+        if (data != null) {
+            val task: Task<GoogleSignInAccount> = GoogleSignIn.getSignedInAccountFromIntent(data)
+            try {
+                val account = task.getResult(ApiException::class.java)
+                val idToken = account.idToken
+                if (!idToken.isNullOrEmpty()) {
+                    navController.navigate("baking") {
+                        popUpTo("kBites") { inclusive = true }
+                    }
+                    success = true
+                }
+            } catch (e: Exception) {
+                // Handle error if needed
+            }
+        }
+        if (!success) {
+            authFailed = false
         }
     }
 
@@ -129,11 +164,7 @@ fun KBitesScreen() {
                         cursorColor = wellsFargoRed
                     )
                 )
-                val bitmap = BitmapFactory.decodeResource(
-                    context.resources,
-                    com.build.kbites_demo.R.drawable.google
 
-                )
                 Spacer(modifier = Modifier.height(100.dp))
                 Button(
                     onClick = {
@@ -217,6 +248,18 @@ fun KBitesScreen() {
                     CircularProgressIndicator(color = wellsFargoRed)
                 }
             }
+            if (authFailed) {
+                AlertDialog(
+                    onDismissRequest = { authFailed = false },
+                    title = { Text("Authentication Failed") },
+                    text = { Text("Google authentication failed. Please try again.") },
+                    confirmButton = {
+                        Button(onClick = { authFailed = false }) {
+                            Text("OK")
+                        }
+                    }
+                )
+            }
         }
     }
 }
@@ -224,6 +267,7 @@ fun KBitesScreen() {
 @Preview(showBackground = true)
 @Composable
 fun KBitesScreenPreview() {
-    KBitesScreen()
+    val navController = androidx.navigation.compose.rememberNavController()
+        KBitesScreen(navController)
 }
 
