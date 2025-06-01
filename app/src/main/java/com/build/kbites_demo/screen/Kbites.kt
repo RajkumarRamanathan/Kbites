@@ -27,11 +27,17 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.painterResource
 import com.build.kbites_demo.R
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
 
 val images1 = arrayOf(
     // Image generated using Gemini from the prompt "cupcake image"
    com.build.kbites_demo.R.drawable.baked_goods_1
 )
+
 @Composable
 fun KBitesScreen() {
     val uriHandler = LocalUriHandler.current
@@ -41,13 +47,28 @@ fun KBitesScreen() {
     val wellsFargoWhite = Color(0xFFFFFFFF)
     val backgroundGrey = Color(0xFFF5F5F5)
     val context = LocalContext.current
-    var isLoading by remember { mutableStateOf(false) } // <-- Added loading state
+    var isLoading by remember { mutableStateOf(false) }
+
+    // GoogleSignIn setup
+    val gso = remember {
+        GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestEmail()
+            .build()
+    }
+    val googleSignInClient = remember { GoogleSignIn.getClient(context, gso) }
     val googleSignInLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        // TODO: Handle Google Sign-In result here
-        isLoading = false // <-- Dismiss progress bar when result is received
+        isLoading = false
+        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+        try {
+            val account: GoogleSignInAccount? = task.getResult(ApiException::class.java)
+            // TODO: Handle successful sign-in (account contains user info)
+        } catch (e: ApiException) {
+            // TODO: Handle sign-in failure
+        }
     }
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = backgroundGrey
@@ -118,7 +139,7 @@ fun KBitesScreen() {
                     onClick = {
                         isLoading = true // <-- Show progress bar
                         // Launch Google Sign-In intent
-                        val signInIntent = Intent("com.google.android.gms.auth.GOOGLE_SIGN_IN")
+                        val signInIntent = googleSignInClient.signInIntent
                         googleSignInLauncher.launch(signInIntent)
                     },
                     modifier = Modifier
@@ -146,13 +167,12 @@ fun KBitesScreen() {
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-
                 Button(
                     onClick = {
-                        isLoading = true // <-- Show progress bar
-                        // Launch Google Sign-In intent
-                        val signInIntent = Intent("com.google.android.gms.auth.GOOGLE_SIGN_IN")
-                        googleSignInLauncher.launch(signInIntent)
+                        isLoading = true
+                        // Open Apple sign-in page in browser (demo only)
+                        uriHandler.openUri("https://appleid.apple.com/auth/authorize?client_id=YOUR_CLIENT_ID&redirect_uri=YOUR_REDIRECT_URI&response_type=code%20id_token&scope=name%20email")
+                        isLoading = false
                     },
                     modifier = Modifier
                         .wrapContentWidth()
@@ -169,7 +189,7 @@ fun KBitesScreen() {
                     ) {
                         Image(
                             painter = painterResource(id = R.drawable.apple_ico),
-                            contentDescription = "Google logo",
+                            contentDescription = "Apple logo",
                             modifier = Modifier.size(24.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
